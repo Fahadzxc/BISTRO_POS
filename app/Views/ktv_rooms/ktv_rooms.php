@@ -57,12 +57,15 @@ const KTV = {
         csrfToken: '<?= $csrfToken ?>'
     },
     pollInterval: 4000,
-    timerInterval: null,
+    rooms: [],
+    /** Per-room base for smooth timer (client clock). Set only on Start/Resume or first load of active session. */
+    roomBases: {},
     endRoomId: null,
     formatTime(seconds) {
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        const s = seconds % 60;
+        const sec = Math.max(0, Math.floor(Number(seconds)));
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
         return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
     },
     formatPrice(n) {
@@ -80,6 +83,30 @@ const KTV = {
         const r = await fetch(this.cfg.getRooms);
         const text = await r.text();
         try { return JSON.parse(text); } catch (e) { return []; }
+    },
+    /** Compute display elapsed/bill. Active = client clock (base + delta) so counting is steady like a real clock. Paused = server value (frozen). */
+    roomsForDisplay() {
+        const nowSec = Date.now() / 1000;
+        return this.rooms.map(room => {
+            const hasSession = room.session_id && (room.session_status === 'active' || room.session_status === 'paused');
+            let elapsed = room.elapsed || 0;
+            const rid = room.id;
+            const base = this.roomBases[rid];
+            if (hasSession && room.session_status === 'active') {
+                if (!base || base.sessionId !== room.session_id) {
+                    this.roomBases[rid] = { baseElapsed: room.elapsed || 0, baseTs: nowSec, sessionId: room.session_id };
+                }
+                const b = this.roomBases[rid];
+                elapsed = b.baseElapsed + (nowSec - b.baseTs);
+            } else if (hasSession && room.session_status === 'paused') {
+                elapsed = room.elapsed || 0;
+            } else {
+                if (this.roomBases[rid]) delete this.roomBases[rid];
+            }
+            const hours = elapsed / 3600;
+            const current_bill = hasSession ? Math.round(hours * room.hourly_rate * 100) / 100 : 0;
+            return { ...room, elapsed, current_bill };
+        });
     },
     render(rooms) {
         const grid = document.getElementById('ktvGrid');
@@ -159,7 +186,23 @@ const KTV = {
     },
     async poll() {
         const rooms = await this.getRooms();
-        if (Array.isArray(rooms)) this.render(rooms);
+        if (!Array.isArray(rooms)) return;
+        const prevRooms = this.rooms;
+        this.rooms = rooms;
+        const nowSec = Date.now() / 1000;
+        rooms.forEach(r => {
+            if (r.session_status === 'active' && r.session_id) {
+                const prev = prevRooms.find(p => p.id === r.id);
+                const justStartedOrResumed = !prev || prev.session_status !== 'active' || prev.session_id !== r.session_id;
+                if (justStartedOrResumed) {
+                    this.roomBases[r.id] = { baseElapsed: r.elapsed || 0, baseTs: nowSec, sessionId: r.session_id };
+                }
+            }
+        });
+        this.render(this.roomsForDisplay());
+    },
+    tick() {
+        if (this.rooms.length) this.render(this.roomsForDisplay());
     }
 };
 
@@ -168,5 +211,6 @@ document.getElementById('endSessionConfirmBtn').addEventListener('click', () => 
 document.addEventListener('DOMContentLoaded', () => {
     KTV.poll();
     setInterval(() => KTV.poll(), KTV.pollInterval);
+    setInterval(() => KTV.tick(), 1000);
 });
 </script>

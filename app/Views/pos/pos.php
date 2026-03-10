@@ -171,7 +171,7 @@ const POS = {
         grid.innerHTML = products.map(p => `
             <div class="pos-product-card" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" title="Click to add to cart">
                 <div class="product-img">
-                    ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">` : '<i class="bi bi-box-seam"></i>'}
+                    ${p.image ? `<img src="${p.image}" alt="${p.name ?? ''}">` : '<i class="bi bi-box-seam"></i>'}
                 </div>
                 <div class="product-name">${p.name}</div>
                 <div class="product-price">${this.formatPrice(p.price)}</div>

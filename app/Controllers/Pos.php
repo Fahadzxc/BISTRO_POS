@@ -35,9 +35,15 @@ class Pos extends BaseController
 
     public function getProducts()
     {
+        helper('url');
         $categoryId = $this->request->getGet('category_id');
         $model      = new ProductModel();
         $products   = $model->getByCategory($categoryId ? (int) $categoryId : null);
+        foreach ($products as &$p) {
+            if (! empty($p['image'])) {
+                $p['image'] = base_url($p['image']);
+            }
+        }
         return $this->response->setJSON($products);
     }
 

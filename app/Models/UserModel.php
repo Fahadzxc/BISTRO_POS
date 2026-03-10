@@ -57,10 +57,27 @@ class UserModel extends Model
     }
 
     /**
+     * Check if email is already used by another user (for edit validation).
+     */
+    public function emailExistsForAnotherUser(int $excludeUserId, string $email): bool
+    {
+        $row = $this->where('email', $email)->where('user_id !=', $excludeUserId)->first();
+        return $row !== null;
+    }
+
+    /**
      * Get allowed roles.
      */
     public static function allowedRoles(): array
     {
         return ['admin', 'cashier', 'staff'];
+    }
+
+    /**
+     * Get all users ordered by name.
+     */
+    public function getAllUsers(): array
+    {
+        return $this->orderBy('name')->findAll();
     }
 }

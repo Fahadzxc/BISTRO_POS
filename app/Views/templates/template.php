@@ -277,7 +277,7 @@
         .layout-pos .pos-products {
             flex: 1;
             overflow-y: auto;
-            padding: 1rem;
+            padding: 1.25rem;
         }
         .layout-pos .pos-cart {
             width: 380px;
@@ -291,27 +291,29 @@
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
         }
         .pos-category-bar .btn {
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 1.1rem;
             font-size: 0.9rem;
-            min-height: 44px;
+            min-height: 40px;
+            border-radius: 999px;
         }
         .pos-product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 0.75rem;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.2rem;
         }
         .pos-product-card {
             background: white;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            padding: 1rem;
+            padding: 0.7rem 0.9rem 0.9rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
-            min-height: 160px;
+            min-height: 280px;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
         }
         .pos-product-card .btn { cursor: pointer; }
         .pos-product-card:hover {
@@ -319,19 +321,24 @@
             box-shadow: 0 4px 12px rgba(26,54,93,0.15);
         }
         .pos-product-card .product-img {
-            width: 64px;
-            height: 64px;
-            background: #f1f5f9;
+            width: 100%;
+            height: 190px;
+            padding: 10px;
+            background: #ffffff;
             border-radius: 8px;
-            margin: 0 auto 0.5rem;
+            margin: 0 auto 0.6rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            color: #94a3b8;
+        }
+        .pos-product-card .product-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 6px;
         }
         .pos-product-card .product-name {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: #334155;
             margin-bottom: 0.25rem;
@@ -342,13 +349,17 @@
             overflow: hidden;
         }
         .pos-product-card .product-price {
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: var(--pos-primary);
         }
         .pos-product-card .pos-add-btn {
-            min-height: 36px;
-            font-weight: 600;
+            width: 100%;
+            min-height: 44px;
+            padding: 0.6rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 10px;
         }
         .pos-cart-header {
             padding: 1rem;
@@ -370,15 +381,15 @@
             border-radius: 8px;
             margin-bottom: 0.5rem;
         }
-        .pos-cart-item .item-name { flex: 1; font-size: 0.9rem; font-weight: 500; }
+        .pos-cart-item .item-name { flex: 1; font-size: 0.95rem; font-weight: 500; }
         .pos-cart-item .item-qty {
             display: flex;
             align-items: center;
             gap: 0.25rem;
         }
         .pos-cart-item .btn-qty {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             padding: 0;
             display: flex;
             align-items: center;
@@ -386,16 +397,16 @@
         }
         .pos-cart-item .item-subtotal { font-weight: 600; min-width: 70px; text-align: right; }
         .pos-cart-footer {
-            padding: 1rem;
+            padding: 1.1rem;
             border-top: 2px solid #e2e8f0;
         }
-        .pos-cart-total { font-size: 1.25rem; font-weight: 700; color: var(--pos-primary); }
+        .pos-cart-total { font-size: 1.4rem; font-weight: 800; color: var(--pos-primary); }
         .btn-checkout {
             width: 100%;
-            padding: 1rem;
+            padding: 0.9rem 1rem;
             font-size: 1.1rem;
-            font-weight: 600;
-            min-height: 52px;
+            font-weight: 700;
+            min-height: 50px;
             background: linear-gradient(135deg, var(--pos-primary), var(--pos-secondary));
             border: none;
         }

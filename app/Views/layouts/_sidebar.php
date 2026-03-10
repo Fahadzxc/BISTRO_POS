@@ -10,7 +10,7 @@ $canAccess = [
     'products'    => in_array($role, ['admin', 'cashier']),
     'inventory'   => in_array($role, ['admin', 'cashier']),
     'ktv_rooms'   => in_array($role, ['admin', 'staff']),
-    'reports'     => in_array($role, ['admin', 'cashier']),
+    'reports'     => $role === 'admin',
     'users'       => $role === 'admin',
 ];
 ?>
@@ -37,16 +37,22 @@ $canAccess = [
         <?php endif; ?>
 
         <?php if ($canAccess['orders']): ?>
-        <a href="#" class="nav-link <?= $current === 'orders' ? 'active' : '' ?>">
+        <a href="<?= site_url('orders') ?>" class="nav-link <?= $current === 'orders' ? 'active' : '' ?>">
             <i class="bi bi-receipt"></i>
             <span>Orders</span>
         </a>
         <?php endif; ?>
 
         <?php if ($canAccess['products']): ?>
-        <a href="#" class="nav-link <?= $current === 'products' ? 'active' : '' ?>">
+        <a href="<?= site_url('products') ?>" class="nav-link <?= $current === 'products' ? 'active' : '' ?>">
             <i class="bi bi-box-seam"></i>
             <span>Products</span>
+        </a>
+        <?php endif; ?>
+        <?php if ($role === 'admin'): ?>
+        <a href="<?= site_url('categories') ?>" class="nav-link <?= $current === 'categories' ? 'active' : '' ?>">
+            <i class="bi bi-tags"></i>
+            <span>Categories</span>
         </a>
         <?php endif; ?>
 
@@ -65,14 +71,14 @@ $canAccess = [
         <?php endif; ?>
 
         <?php if ($canAccess['reports']): ?>
-        <a href="#" class="nav-link <?= $current === 'reports' ? 'active' : '' ?>">
+        <a href="<?= site_url('reports/sales') ?>" class="nav-link <?= $current === 'reports' ? 'active' : '' ?>">
             <i class="bi bi-graph-up"></i>
             <span>Reports</span>
         </a>
         <?php endif; ?>
 
         <?php if ($canAccess['users']): ?>
-        <a href="#" class="nav-link <?= $current === 'users' ? 'active' : '' ?>">
+        <a href="<?= site_url('users') ?>" class="nav-link <?= $current === 'users' ? 'active' : '' ?>">
             <i class="bi bi-people-fill"></i>
             <span>Users</span>
         </a>

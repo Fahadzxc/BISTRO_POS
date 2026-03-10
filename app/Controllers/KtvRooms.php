@@ -42,7 +42,8 @@ class KtvRooms extends BaseController
         $result      = [];
 
         foreach ($rooms as $room) {
-            $session = $sessionModel->getActiveByRoom((int) $room['id']);
+            $roomId = (int) $room['id'];
+            $session = $sessionModel->getActiveByRoom($roomId);
             $elapsed = 0;
             $currentBill = 0;
             $status = $room['status'];
@@ -55,10 +56,15 @@ class KtvRooms extends BaseController
                 $elapsed       = $sessionModel->getElapsedSeconds($session);
                 $hours         = $elapsed / 3600;
                 $currentBill   = round($hours * (float) $room['hourly_rate'], 2);
+                // Room may be out of sync (e.g. set to available but session still active). Force occupied.
+                if ($status !== 'occupied') {
+                    $roomModel->update($roomId, ['status' => 'occupied']);
+                    $status = 'occupied';
+                }
             }
 
             $result[] = [
-                'id'            => (int) $room['id'],
+                'id'            => $roomId,
                 'room_name'     => $room['room_name'],
                 'hourly_rate'   => (float) $room['hourly_rate'],
                 'status'        => $status,
