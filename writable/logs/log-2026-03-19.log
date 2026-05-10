@@ -1,0 +1,78 @@
+ERROR - 2026-03-19 05:19:43 --> You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '= '2026-03-19 05:19:42'
+WHERE `users`.`user_id` IN (2)' at line 1
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 300.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(300): mysqli->query('UPDATE `users` SET `name` = \'Cashier User\', `email` = \'cashier@example.com\', `role` = \'cashier\', `status` = \'inactive\',  = \'2026-03-19 05:19:42\'
+WHERE `users`.`user_id` IN (2)', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(769): CodeIgniter\Database\MySQLi\Connection->execute('UPDATE `users` SET `name` = \'Cashier User\', `email` = \'cashier@example.com\', `role` = \'cashier\', `status` = \'inactive\',  = \'2026-03-19 05:19:42\'
+WHERE `users`.`user_id` IN (2)')
+ 3 SYSTEMPATH\Database\BaseConnection.php(686): CodeIgniter\Database\BaseConnection->simpleQuery('UPDATE `users` SET `name` = \'Cashier User\', `email` = \'cashier@example.com\', `role` = \'cashier\', `status` = \'inactive\',  = \'2026-03-19 05:19:42\'
+WHERE `users`.`user_id` IN (2)')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(2521): CodeIgniter\Database\BaseConnection->query('UPDATE `users` SET `name` = :name:, `email` = :email:, `role` = :role:, `status` = :status:,  = ::
+WHERE `users`.`user_id` IN :users.user_id:', [...], false)
+ 5 SYSTEMPATH\Model.php(407): CodeIgniter\Database\BaseBuilder->update()
+ 6 SYSTEMPATH\BaseModel.php(1073): CodeIgniter\Model->doUpdate([...], [...])
+ 7 SYSTEMPATH\Model.php(706): CodeIgniter\BaseModel->update([...], [...])
+ 8 APPPATH\Controllers\Users.php(187): CodeIgniter\Model->update(2, [...])
+ 9 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Users->update(2)
+10 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Users))
+11 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-03-19 05:19:43 --> CodeIgniter\Database\Exceptions\DatabaseException: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '= '2026-03-19 05:19:42'
+WHERE `users`.`user_id` IN (2)' at line 1
+[Method: POST, Route: users/update/2]
+in SYSTEMPATH\Database\BaseConnection.php on line 724.
+ 1 SYSTEMPATH\Database\BaseBuilder.php(2521): CodeIgniter\Database\BaseConnection->query('UPDATE `users` SET `name` = :name:, `email` = :email:, `role` = :role:, `status` = :status:,  = ::
+WHERE `users`.`user_id` IN :users.user_id:', [...], false)
+ 2 SYSTEMPATH\Model.php(407): CodeIgniter\Database\BaseBuilder->update()
+ 3 SYSTEMPATH\BaseModel.php(1073): CodeIgniter\Model->doUpdate([...], [...])
+ 4 SYSTEMPATH\Model.php(706): CodeIgniter\BaseModel->update([...], [...])
+ 5 APPPATH\Controllers\Users.php(187): CodeIgniter\Model->update(2, [...])
+ 6 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Users->update(2)
+ 7 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Users))
+ 8 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 9 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+10 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+11 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-03-19 05:19:43 --> [Caused by] CodeIgniter\Database\Exceptions\DatabaseException: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '= '2026-03-19 05:19:42'
+WHERE `users`.`user_id` IN (2)' at line 1
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 310.
+ 1 SYSTEMPATH\Database\BaseConnection.php(769): CodeIgniter\Database\MySQLi\Connection->execute('UPDATE `users` SET `name` = \'Cashier User\', `email` = \'cashier@example.com\', `role` = \'cashier\', `status` = \'inactive\',  = \'2026-03-19 05:19:42\'
+WHERE `users`.`user_id` IN (2)')
+ 2 SYSTEMPATH\Database\BaseConnection.php(686): CodeIgniter\Database\BaseConnection->simpleQuery('UPDATE `users` SET `name` = \'Cashier User\', `email` = \'cashier@example.com\', `role` = \'cashier\', `status` = \'inactive\',  = \'2026-03-19 05:19:42\'
+WHERE `users`.`user_id` IN (2)')
+ 3 SYSTEMPATH\Database\BaseBuilder.php(2521): CodeIgniter\Database\BaseConnection->query('UPDATE `users` SET `name` = :name:, `email` = :email:, `role` = :role:, `status` = :status:,  = ::
+WHERE `users`.`user_id` IN :users.user_id:', [...], false)
+ 4 SYSTEMPATH\Model.php(407): CodeIgniter\Database\BaseBuilder->update()
+ 5 SYSTEMPATH\BaseModel.php(1073): CodeIgniter\Model->doUpdate([...], [...])
+ 6 SYSTEMPATH\Model.php(706): CodeIgniter\BaseModel->update([...], [...])
+ 7 APPPATH\Controllers\Users.php(187): CodeIgniter\Model->update(2, [...])
+ 8 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Users->update(2)
+ 9 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Users))
+10 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+11 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+12 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+13 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-03-19 05:19:43 --> [Caused by] mysqli_sql_exception: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '= '2026-03-19 05:19:42'
+WHERE `users`.`user_id` IN (2)' at line 1
+in SYSTEMPATH\Database\MySQLi\Connection.php on line 300.
+ 1 SYSTEMPATH\Database\MySQLi\Connection.php(300): mysqli->query('UPDATE `users` SET `name` = \'Cashier User\', `email` = \'cashier@example.com\', `role` = \'cashier\', `status` = \'inactive\',  = \'2026-03-19 05:19:42\'
+WHERE `users`.`user_id` IN (2)', 0)
+ 2 SYSTEMPATH\Database\BaseConnection.php(769): CodeIgniter\Database\MySQLi\Connection->execute('UPDATE `users` SET `name` = \'Cashier User\', `email` = \'cashier@example.com\', `role` = \'cashier\', `status` = \'inactive\',  = \'2026-03-19 05:19:42\'
+WHERE `users`.`user_id` IN (2)')
+ 3 SYSTEMPATH\Database\BaseConnection.php(686): CodeIgniter\Database\BaseConnection->simpleQuery('UPDATE `users` SET `name` = \'Cashier User\', `email` = \'cashier@example.com\', `role` = \'cashier\', `status` = \'inactive\',  = \'2026-03-19 05:19:42\'
+WHERE `users`.`user_id` IN (2)')
+ 4 SYSTEMPATH\Database\BaseBuilder.php(2521): CodeIgniter\Database\BaseConnection->query('UPDATE `users` SET `name` = :name:, `email` = :email:, `role` = :role:, `status` = :status:,  = ::
+WHERE `users`.`user_id` IN :users.user_id:', [...], false)
+ 5 SYSTEMPATH\Model.php(407): CodeIgniter\Database\BaseBuilder->update()
+ 6 SYSTEMPATH\BaseModel.php(1073): CodeIgniter\Model->doUpdate([...], [...])
+ 7 SYSTEMPATH\Model.php(706): CodeIgniter\BaseModel->update([...], [...])
+ 8 APPPATH\Controllers\Users.php(187): CodeIgniter\Model->update(2, [...])
+ 9 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Users->update(2)
+10 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Users))
+11 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+12 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+13 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+14 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+DEBUG - 2026-03-19 06:10:42 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
