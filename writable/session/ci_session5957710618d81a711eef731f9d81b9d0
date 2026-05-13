@@ -1,0 +1,1 @@
+__ci_last_regenerate|i:1778689714;_ci_previous_url|s:41:"http://localhost/BISTRO_POS/orders/view/1";user_id|s:1:"1";name|s:10:"Admin User";email|s:17:"admin@example.com";role|s:5:"admin";isLoggedIn|b:1;pos_cart|a:1:{s:3:"p31";a:5:{s:10:"product_id";i:31;s:4:"name";s:16:"Buttered Chicken";s:5:"price";d:99;s:3:"qty";i:2;s:8:"subtotal";d:198;}}pos_edit_order_id|i:1;__ci_vars|a:0:{}

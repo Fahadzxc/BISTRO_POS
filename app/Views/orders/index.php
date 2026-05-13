@@ -73,11 +73,6 @@
                                     </td>
                                     <td>
                                         <a href="<?= site_url('orders/view/' . $o['id']) ?>" class="btn btn-sm btn-outline-primary">View</a>
-                                        <?php if (strtolower((string) session()->get('role')) === 'admin' && $status === 'pending'): ?>
-                                            <a href="<?= site_url('orders/edit/' . $o['id']) ?>" class="btn btn-sm btn-outline-warning" title="Edit Order">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </a>
-                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

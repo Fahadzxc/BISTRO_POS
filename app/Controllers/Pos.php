@@ -180,23 +180,12 @@ class Pos extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Cart is empty']);
         }
 
-        $paymentMethod = $this->request->getPost('payment_method');
-        $cash          = (float) $this->request->getPost('cash');
-        $total         = array_sum(array_column($cart, 'subtotal'));
-
-        if (! in_array($paymentMethod, ['cash', 'card'], true)) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Invalid payment method']);
-        }
-
-        if ($paymentMethod === 'cash' && $cash < $total) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Insufficient cash amount']);
-        }
+        $total = array_sum(array_column($cart, 'subtotal'));
 
         $productModel = new ProductModel();
         $orderModel  = new OrderModel();
         $db          = \Config\Database::connect();
         $cashierId   = session()->get('user_id');
-        $changeAmount = $paymentMethod === 'cash' ? $cash - $total : null;
         $stockLogModel = new StockLogModel();
         $editingOrderId = (int) (session()->get('pos_edit_order_id') ?? 0);
 
@@ -264,9 +253,6 @@ class Pos extends BaseController
         if ($editingOrder) {
             $updated = $orderModel->update($orderId, [
                 'total'          => $total,
-                'payment_method' => $paymentMethod,
-                'cash'           => $paymentMethod === 'cash' ? $cash : null,
-                'change_amount'  => $changeAmount,
                 'cashier_id'     => $cashierId,
             ]);
             if (! $updated) {
@@ -278,9 +264,6 @@ class Pos extends BaseController
             $orderId = $orderModel->insert([
                 'invoice_no'    => $invoiceNo,
                 'total'         => $total,
-                'payment_method'=> $paymentMethod,
-                'cash'          => $paymentMethod === 'cash' ? $cash : null,
-                'change_amount' => $changeAmount,
                 'status'        => 'pending',
                 'created_at'    => date('Y-m-d H:i:s'),
                 'cashier_id'    => $cashierId,
@@ -337,9 +320,7 @@ class Pos extends BaseController
             'success'      => true,
             'invoice_no'   => $invoiceNo,
             'total'        => $total,
-            'change'       => $changeAmount,
-            'payment_method' => $paymentMethod,
-            'edited'         => $editingOrder ? true : false,
+            'edited'       => $editingOrder ? true : false,
         ]);
     }
 

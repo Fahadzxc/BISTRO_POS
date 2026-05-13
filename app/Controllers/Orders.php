@@ -89,8 +89,71 @@ class Orders extends BaseController
             return redirect()->to(site_url('orders'))->with('error', 'Order not found.');
         }
 
+        $currentStatus = strtolower((string) ($order['status'] ?? 'pending'));
+        
+        // Prevent any status changes when order is completed
+        if ($currentStatus === 'completed') {
+            return redirect()->to(site_url('orders/view/' . $id))->with('error', 'Cannot change status of a completed order.');
+        }
+        
+        // Prevent changing from 'processing' back to 'pending'
+        if ($currentStatus === 'processing' && $status === 'pending') {
+            return redirect()->to(site_url('orders/view/' . $id))->with('error', 'Cannot change status from processing back to pending.');
+        }
+
+        // If changing to "processing" or "completed", require payment details
+        if (($status === 'processing' || $status === 'completed') && (empty($order['payment_method']) || empty($order['cash']))) {
+            session()->setFlashdata('require_payment', true);
+            session()->setFlashdata('order_id_requiring_payment', $id);
+            return redirect()->to(site_url('orders/view/' . $id))->with('info', 'Please process payment first.');
+        }
+
         $model->update($id, ['status' => $status]);
         return redirect()->to(site_url('orders/view/' . $id))->with('success', 'Order status updated.');
+    }
+
+    /**
+     * Process payment for an order (AJAX endpoint)
+     */
+    public function processPayment(int $id)
+    {
+        $adminRedirect = $this->ensureAdmin();
+        if ($adminRedirect !== null) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
+        }
+
+        $paymentMethod = strtolower(trim((string) $this->request->getPost('payment_method')));
+        $cash          = (float) $this->request->getPost('cash');
+    $updateStatus  = strtolower(trim((string) $this->request->getPost('update_status')));
+
+        if (! in_array($paymentMethod, ['cash', 'card'], true)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid payment method']);
+        }
+
+        $model = new OrderModel();
+        $order = $model->find($id);
+        if (! $order) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Order not found']);
+        }
+
+        $total = (float) ($order['total'] ?? 0);
+        if ($paymentMethod === 'cash' && $cash < $total) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Insufficient cash amount']);
+        }
+
+        $changeAmount = $paymentMethod === 'cash' ? $cash - $total : null;
+
+        $model->update($id, [
+            'payment_method' => $paymentMethod,
+            'cash'           => $paymentMethod === 'cash' ? $cash : null,
+            'change_amount'  => $changeAmount,
+        ]);
+
+        return $this->response->setJSON([
+            'success'   => true,
+            'message'   => 'Payment processed and status updated to processing',
+            'change'    => $changeAmount,
+        ]);
     }
 
     public function edit(int $id)
@@ -176,8 +239,9 @@ class Orders extends BaseController
             'payment_method' => $paymentMethod,
             'cash'           => $paymentMethod === 'cash' ? $cash : null,
             'change_amount'  => $paymentMethod === 'cash' ? $changeAmount : null,
+            'status'         => 'processing',
         ]);
 
-        return redirect()->to(site_url('orders/view/' . $id))->with('success', 'Order updated successfully.');
+        return redirect()->to(site_url('orders/view/' . $id))->with('success', 'Order updated successfully. Status changed to processing.');
     }
 }

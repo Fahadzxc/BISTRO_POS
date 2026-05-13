@@ -50,20 +50,30 @@
                 </div>
 
                 <?php if (strtolower((string) session()->get('role')) === 'admin'): ?>
-                    <form method="post" action="<?= site_url('orders/update-status/' . $order['id']) ?>" class="row g-2 align-items-end mt-2">
+                    <?php if ($currentStatus === 'completed'): ?>
+                        <div class="alert alert-info mt-2 mb-0">
+                            <i class="bi bi-info-circle me-2"></i>Order Completed
+                        </div>
+                    <?php else: ?>
+                    <form id="statusUpdateForm" method="post" action="<?= site_url('orders/update-status/' . $order['id']) ?>" class="row g-2 align-items-end mt-2">
                         <?= csrf_field() ?>
                         <div class="col-md-4">
                             <label class="form-label small mb-1"><strong>Update Status</strong></label>
-                            <select name="status" class="form-select form-select-sm">
-                                <option value="pending" <?= $currentStatus === 'pending' ? 'selected' : '' ?>>Pending</option>
+                            <select id="statusSelect" name="status" class="form-select form-select-sm">
+                                <option value="pending" <?= $currentStatus === 'pending' ? 'selected' : '' ?> <?= $currentStatus === 'processing' ? 'disabled' : '' ?>>Pending</option>
                                 <option value="processing" <?= $currentStatus === 'processing' ? 'selected' : '' ?>>Processing</option>
                                 <option value="completed" <?= $currentStatus === 'completed' ? 'selected' : '' ?>>Completed</option>
                             </select>
                         </div>
                         <div class="col-md-auto">
-                            <button type="submit" class="btn btn-sm btn-primary">Update Status</button>
+                            <button type="button" class="btn btn-sm btn-primary" id="statusUpdateBtn">Update Status</button>
                         </div>
                         <?php if ($currentStatus === 'pending'): ?>
+                            <div class="col-md-auto">
+                                <button type="button" class="btn btn-sm btn-success" id="paymentBtn" data-toggle="payment">
+                                    <i class="bi bi-credit-card me-1"></i>Payment
+                                </button>
+                            </div>
                             <div class="col-md-auto">
                                 <a href="<?= site_url('orders/edit/' . $order['id']) ?>" class="btn btn-sm btn-outline-warning" title="Edit Order">
                                     <i class="bi bi-pencil-square me-1"></i>Edit Order
@@ -71,6 +81,14 @@
                             </div>
                         <?php endif; ?>
                     </form>
+                    
+                    <!-- Hidden form for payment processing -->
+                    <form id="paymentForm" method="post" action="<?= site_url('orders/update/' . $order['id']) ?>" style="display:none;">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="payment_method" id="hiddenPaymentMethod" value="">
+                        <input type="hidden" name="cash" id="hiddenCash" value="">
+                    </form>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
@@ -141,3 +159,130 @@
         </div>
     </main>
 </div>
+
+<!-- Payment Modal for Orders -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Process Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Total Amount</label>
+                    <input type="text" class="form-control form-control-lg" id="paymentTotal" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-select" id="paymentMethod">
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="cashInputGroup">
+                    <label class="form-label">Cash Received</label>
+                    <input type="number" class="form-control form-control-lg" id="paymentCash" placeholder="0.00" step="0.01" min="0">
+                </div>
+                <div class="mb-0" id="changeGroup" style="display:none;">
+                    <label class="form-label">Change</label>
+                    <input type="text" class="form-control form-control-lg text-success fw-bold" id="paymentChange" readonly>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary btn-lg" id="paymentConfirmBtn">
+                    <i class="bi bi-check-lg me-1"></i>Process Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orderId = <?= $order['id'] ?>;
+    const orderTotal = <?= (float) ($order['total'] ?? 0) ?>;
+    const csrfName = '<?= csrf_token() ?>';
+    const csrfHash = document.querySelector('input[name="<?= csrf_token() ?>"]')?.value || '<?= csrf_hash() ?>';
+
+    const statusUpdateForm = document.getElementById('statusUpdateForm');
+    const statusSelect = document.getElementById('statusSelect');
+    const statusUpdateBtn = document.getElementById('statusUpdateBtn');
+    const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    const paymentBtn = document.getElementById('paymentBtn');
+    let paymentMode = 'update-status'; // 'update-status' or 'payment-only'
+
+    function formatPrice(n) {
+        return '₱' + parseFloat(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+   paymentBtn?.addEventListener('click', function(e) {
+       e.preventDefault();
+       paymentMode = 'payment-only';
+       document.getElementById('paymentTotal').value = formatPrice(orderTotal);
+       document.getElementById('paymentCash').value = '';
+       document.getElementById('paymentChange').value = '';
+       document.getElementById('paymentMethod').value = 'cash';
+       document.getElementById('cashInputGroup').style.display = 'block';
+       document.getElementById('changeGroup').style.display = 'none';
+       paymentModal.show();
+   });
+
+
+    statusUpdateBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const newStatus = statusSelect.value;
+        const currentStatus = '<?= $currentStatus ?>';
+
+        // If changing to "processing" or "completed", check if payment is needed
+        if ((newStatus === 'processing' || newStatus === 'completed') && ('<?= ($order['payment_method'] ?? '') ?>' === '')) {
+            // Payment not yet processed, show payment modal
+            paymentMode = 'update-status';
+            document.getElementById('paymentTotal').value = formatPrice(orderTotal);
+            document.getElementById('paymentCash').value = '';
+            document.getElementById('paymentChange').value = '';
+            document.getElementById('paymentMethod').value = 'cash';
+            document.getElementById('cashInputGroup').style.display = 'block';
+            document.getElementById('changeGroup').style.display = 'none';
+            paymentModal.show();
+        } else {
+            // Just update status normally
+            statusUpdateForm.submit();
+        }
+    });
+
+    document.getElementById('paymentMethod').addEventListener('change', function() {
+        document.getElementById('cashInputGroup').style.display = this.value === 'cash' ? 'block' : 'none';
+        document.getElementById('changeGroup').style.display = 'none';
+    });
+
+    document.getElementById('paymentCash').addEventListener('input', function() {
+        const cash = parseFloat(this.value) || 0;
+        const changeEl = document.getElementById('paymentChange');
+        const changeGroup = document.getElementById('changeGroup');
+        if (cash >= orderTotal) {
+            changeEl.value = formatPrice(cash - orderTotal);
+            changeGroup.style.display = 'block';
+        } else {
+            changeGroup.style.display = 'none';
+        }
+    });
+
+    document.getElementById('paymentConfirmBtn').addEventListener('click', async function() {
+        const method = document.getElementById('paymentMethod').value;
+        const cash = parseFloat(document.getElementById('paymentCash').value) || 0;
+
+        if (method === 'cash' && cash < orderTotal) {
+            alert('Insufficient cash amount');
+            return;
+        }
+
+        // Set the hidden form values
+        document.getElementById('hiddenPaymentMethod').value = method;
+        document.getElementById('hiddenCash').value = cash;
+        
+        // Submit the payment form
+        document.getElementById('paymentForm').submit();
+    });
+});
+</script>

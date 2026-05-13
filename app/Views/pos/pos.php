@@ -62,46 +62,7 @@
                     <span id="posTotal">₱0.00</span>
                 </div>
                 <button type="button" class="btn btn-primary btn-checkout" id="posCheckoutBtn" disabled>
-                    <i class="bi bi-credit-card me-2"></i>Checkout
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Payment Modal -->
-<div class="modal fade" id="paymentModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Payment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Total</label>
-                    <input type="text" class="form-control form-control-lg" id="paymentTotal" readonly>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Payment Method</label>
-                    <select class="form-select" id="paymentMethod">
-                        <option value="cash">Cash</option>
-                        <option value="card">Card</option>
-                    </select>
-                </div>
-                <div class="mb-3" id="cashInputGroup">
-                    <label class="form-label">Cash Received</label>
-                    <input type="number" class="form-control form-control-lg" id="paymentCash" placeholder="0.00" step="0.01" min="0">
-                </div>
-                <div class="mb-0" id="changeGroup" style="display:none;">
-                    <label class="form-label">Change</label>
-                    <input type="text" class="form-control form-control-lg text-success fw-bold" id="paymentChange" readonly>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary btn-lg" id="paymentConfirmBtn">
-                    <i class="bi bi-check-lg me-1"></i>Confirm
+                    <i class="bi bi-check2-circle me-2"></i>Place Order
                 </button>
             </div>
         </div>
@@ -114,10 +75,10 @@
         <div class="modal-content">
             <div class="modal-body text-center py-5">
                 <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
-                <h5 class="mt-3" id="successTitle">Order Complete!</h5>
+                <h5 class="mt-3" id="successTitle">Order Created!</h5>
                 <p class="mb-0 text-muted" id="successInvoice"></p>
                 <p class="mb-0 fw-bold" id="successTotal"></p>
-                <p class="mb-0 small text-muted" id="successChange"></p>
+                <p class="small text-muted mt-2">Payment will be processed when status changes to processing.</p>
             </div>
         </div>
     </div>
@@ -173,7 +134,7 @@ const POS = {
         return this.fetch(this.cfg.getCart);
     },
     async checkout(paymentMethod, cash = 0) {
-        return this.fetch(this.cfg.checkout, { payment_method: paymentMethod, cash });
+        return this.fetch(this.cfg.checkout, { });
     },
     formatPrice(n) {
         return '₱' + parseFloat(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -265,36 +226,18 @@ const POS = {
         const r = await this.removeFromCart(productId, cartKey);
         if (r.success) this.renderCart(r.cart);
     },
-    initPayment(total) {
-        document.getElementById('paymentTotal').value = this.formatPrice(total);
-        document.getElementById('paymentCash').value = '';
-        document.getElementById('paymentChange').value = '';
-        document.getElementById('cashInputGroup').style.display = document.getElementById('paymentMethod').value === 'cash' ? 'block' : 'none';
-        document.getElementById('changeGroup').style.display = 'none';
-    },
-    async confirmPayment() {
-        const method = document.getElementById('paymentMethod').value;
-        const cash = parseFloat(document.getElementById('paymentCash').value) || 0;
-        const total = parseFloat(document.getElementById('posTotal').textContent.replace(/[₱,]/g, ''));
-
-        if (method === 'cash' && cash < total) {
-            alert('Insufficient cash amount');
-            return;
-        }
-
-        const r = await this.checkout(method, cash);
+    async confirmCheckout() {
+        const r = await this.checkout();
         if (r.success) {
-            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
-            document.getElementById('successTitle').textContent = r.edited ? 'Order Updated!' : 'Order Complete!';
+            document.getElementById('successTitle').textContent = r.edited ? 'Order Updated!' : 'Order Created!';
             document.getElementById('successInvoice').textContent = r.invoice_no;
             document.getElementById('successTotal').textContent = this.formatPrice(r.total);
-            document.getElementById('successChange').textContent = r.change != null ? 'Change: ' + this.formatPrice(r.change) : '';
             const successModal = new bootstrap.Modal(document.getElementById('successModal'));
             successModal.show();
             this.renderCart({ items: [], subtotal: 0, total: 0 });
             document.getElementById('successModal').addEventListener('hidden.bs.modal', () => successModal.dispose(), { once: true });
         } else {
-            alert(r.message || 'Checkout failed');
+            alert(r.message || 'Order creation failed');
         }
     }
 };
@@ -322,28 +265,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('posCheckoutBtn').addEventListener('click', () => {
         const total = parseFloat(document.getElementById('posTotal').textContent.replace(/[₱,]/g, ''));
         if (total <= 0) return;
-        POS.initPayment(total);
-        new bootstrap.Modal(document.getElementById('paymentModal')).show();
-    });
-
-    document.getElementById('paymentMethod').addEventListener('change', function() {
-        document.getElementById('cashInputGroup').style.display = this.value === 'cash' ? 'block' : 'none';
-        document.getElementById('changeGroup').style.display = 'none';
-    });
-
-    document.getElementById('paymentCash').addEventListener('input', function() {
-        const total = parseFloat(document.getElementById('posTotal').textContent.replace(/[₱,]/g, ''));
-        const cash = parseFloat(this.value) || 0;
-        const changeEl = document.getElementById('paymentChange');
-        const changeGroup = document.getElementById('changeGroup');
-        if (cash >= total) {
-            changeEl.value = POS.formatPrice(cash - total);
-            changeGroup.style.display = 'block';
-        } else {
-            changeGroup.style.display = 'none';
+        if (confirm('Place this order? Payment will be processed later.')) {
+            POS.confirmCheckout();
         }
     });
-
-    document.getElementById('paymentConfirmBtn').addEventListener('click', () => POS.confirmPayment());
 });
 </script>

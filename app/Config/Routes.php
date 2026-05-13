@@ -78,6 +78,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     // Role-restricted: admin only (order updates/edit)
     $routes->group('', ['filter' => 'role:admin'], static function ($routes) {
         $routes->post('orders/update-status/(:num)', 'Orders::updateStatus/$1');
+        $routes->post('orders/process-payment/(:num)', 'Orders::processPayment/$1');
         $routes->get('orders/edit/(:num)', 'Orders::edit/$1');
         $routes->post('orders/update/(:num)', 'Orders::update/$1');
     });

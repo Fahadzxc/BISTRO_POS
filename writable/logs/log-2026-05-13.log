@@ -167,3 +167,83 @@ in SYSTEMPATH\Database\MySQLi\Connection.php on line 300.
 12 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
 13 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
 14 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-13 16:47:43 --> ErrorException: Undefined variable $updateStatus
+[Method: GET, Route: orders/edit/2]
+in APPPATH\Controllers\Orders.php on line 194.
+ 1 APPPATH\Controllers\Orders.php(194): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $updateStatus', 'C:\\xampp\\htdocs\\BISTRO_POS\\app\\Controllers\\Orders.php', 194)
+ 2 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Orders->edit(2)
+ 3 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Orders))
+ 4 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-13 16:47:46 --> ErrorException: Undefined variable $updateStatus
+[Method: GET, Route: orders/edit/2]
+in APPPATH\Controllers\Orders.php on line 194.
+ 1 APPPATH\Controllers\Orders.php(194): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $updateStatus', 'C:\\xampp\\htdocs\\BISTRO_POS\\app\\Controllers\\Orders.php', 194)
+ 2 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Orders->edit(2)
+ 3 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Orders))
+ 4 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-13 16:52:55 --> ErrorException: Undefined variable $updateStatus
+[Method: GET, Route: orders/edit/2]
+in APPPATH\Controllers\Orders.php on line 193.
+ 1 APPPATH\Controllers\Orders.php(193): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $updateStatus', 'C:\\xampp\\htdocs\\BISTRO_POS\\app\\Controllers\\Orders.php', 193)
+ 2 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Orders->edit(2)
+ 3 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Orders))
+ 4 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-13 16:53:00 --> ErrorException: Undefined variable $updateStatus
+[Method: GET, Route: orders/edit/2]
+in APPPATH\Controllers\Orders.php on line 193.
+ 1 APPPATH\Controllers\Orders.php(193): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $updateStatus', 'C:\\xampp\\htdocs\\BISTRO_POS\\app\\Controllers\\Orders.php', 193)
+ 2 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Orders->edit(2)
+ 3 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Orders))
+ 4 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-13 16:53:02 --> ErrorException: Undefined variable $updateStatus
+[Method: GET, Route: orders/edit/2]
+in APPPATH\Controllers\Orders.php on line 193.
+ 1 APPPATH\Controllers\Orders.php(193): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $updateStatus', 'C:\\xampp\\htdocs\\BISTRO_POS\\app\\Controllers\\Orders.php', 193)
+ 2 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Orders->edit(2)
+ 3 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Orders))
+ 4 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-13 16:53:04 --> ErrorException: Undefined variable $updateStatus
+[Method: GET, Route: orders/edit/2]
+in APPPATH\Controllers\Orders.php on line 193.
+ 1 APPPATH\Controllers\Orders.php(193): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $updateStatus', 'C:\\xampp\\htdocs\\BISTRO_POS\\app\\Controllers\\Orders.php', 193)
+ 2 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Orders->edit(2)
+ 3 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Orders))
+ 4 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-13 16:53:37 --> ErrorException: Undefined variable $updateStatus
+[Method: GET, Route: orders/edit/2]
+in APPPATH\Controllers\Orders.php on line 193.
+ 1 APPPATH\Controllers\Orders.php(193): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $updateStatus', 'C:\\xampp\\htdocs\\BISTRO_POS\\app\\Controllers\\Orders.php', 193)
+ 2 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Orders->edit(2)
+ 3 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Orders))
+ 4 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2026-05-13 16:54:01 --> ErrorException: Undefined variable $updateStatus
+[Method: GET, Route: orders/edit/2]
+in APPPATH\Controllers\Orders.php on line 193.
+ 1 APPPATH\Controllers\Orders.php(193): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $updateStatus', 'C:\\xampp\\htdocs\\BISTRO_POS\\app\\Controllers\\Orders.php', 193)
+ 2 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\Orders->edit(2)
+ 3 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Orders))
+ 4 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
