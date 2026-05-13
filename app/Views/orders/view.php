@@ -12,6 +12,19 @@
     </header>
 
     <main class="content-area">
+        <?php if (session()->getFlashdata('success')): ?>
+            <div class="alert alert-success alert-dismissible fade show">
+                <?= esc(session()->getFlashdata('success')) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        <?php if (session()->getFlashdata('error')): ?>
+            <div class="alert alert-danger alert-dismissible fade show">
+                <?= esc(session()->getFlashdata('error')) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-body">
                 <div class="row mb-2">
@@ -26,6 +39,39 @@
                     <div class="col-md-4"><strong>Cashier</strong></div>
                     <div class="col-md-8"><?= esc($order['cashier_name'] ?? '-') ?></div>
                 </div>
+                <div class="row mb-2">
+                    <div class="col-md-4"><strong>Status</strong></div>
+                    <div class="col-md-8">
+                        <?php $currentStatus = strtolower((string) ($order['status'] ?? 'pending')); ?>
+                        <span class="badge bg-<?= $currentStatus === 'completed' ? 'success' : ($currentStatus === 'processing' ? 'warning text-dark' : 'secondary') ?>">
+                            <?= esc(ucfirst($currentStatus)) ?>
+                        </span>
+                    </div>
+                </div>
+
+                <?php if (strtolower((string) session()->get('role')) === 'admin'): ?>
+                    <form method="post" action="<?= site_url('orders/update-status/' . $order['id']) ?>" class="row g-2 align-items-end mt-2">
+                        <?= csrf_field() ?>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1"><strong>Update Status</strong></label>
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="pending" <?= $currentStatus === 'pending' ? 'selected' : '' ?>>Pending</option>
+                                <option value="processing" <?= $currentStatus === 'processing' ? 'selected' : '' ?>>Processing</option>
+                                <option value="completed" <?= $currentStatus === 'completed' ? 'selected' : '' ?>>Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-auto">
+                            <button type="submit" class="btn btn-sm btn-primary">Update Status</button>
+                        </div>
+                        <?php if ($currentStatus === 'pending'): ?>
+                            <div class="col-md-auto">
+                                <a href="<?= site_url('orders/edit/' . $order['id']) ?>" class="btn btn-sm btn-outline-warning" title="Edit Order">
+                                    <i class="bi bi-pencil-square me-1"></i>Edit Order
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </form>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -72,14 +118,23 @@
                     <span>Total</span>
                     <span>₱<?= number_format((float) ($order['total'] ?? 0), 2) ?></span>
                 </div>
-                <?php if (! empty($order['cash']) && $order['payment_method'] === 'cash'): ?>
+                <?php if (($order['payment_method'] ?? '') === 'cash'): ?>
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Cash</span>
-                    <span>₱<?= number_format((float) $order['cash'], 2) ?></span>
+                    <span>Amount paid (cash)</span>
+                    <span>₱<?= number_format((float) ($order['cash'] ?? 0), 2) ?></span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span>Change</span>
                     <span>₱<?= number_format((float) ($order['change_amount'] ?? 0), 2) ?></span>
+                </div>
+                <?php elseif (($order['payment_method'] ?? '') === 'card'): ?>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Payment</span>
+                    <span>Card</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 text-muted small">
+                    <span>Amount charged</span>
+                    <span>₱<?= number_format((float) ($order['total'] ?? 0), 2) ?></span>
                 </div>
                 <?php endif; ?>
             </div>

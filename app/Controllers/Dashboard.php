@@ -35,7 +35,7 @@ class Dashboard extends BaseController
         $dash    = new DashboardModel();
         $product = new ProductModel();
 
-        $from = date('Y-m-d 00:00:00', strtotime('-6 days'));
+        $from = date('Y-m-d 00:00:00', strtotime('-30 days'));
         $to   = date('Y-m-d 23:59:59');
 
         $daily   = $dash->getDailySalesLast7Days();
@@ -52,12 +52,19 @@ class Dashboard extends BaseController
                 'totalCustomersToday' => $dash->getTodayOrdersCount(),
                 'lowStockAlerts'      => $product->getLowStockCount(),
                 'outOfStockAlerts'    => $product->getOutOfStockCount(),
+                'ktvSalesToday'       => $dash->getTodayKtvSales(),
+                'ktvSessionsToday'    => $dash->getTodayKtvSessionsCount(),
             ],
+            'activeRooms' => $dash->getActiveKtvRoomsDetails(),
             'charts' => [
                 'dailySales'   => ['labels' => array_column($daily, 'label'), 'data' => array_map('floatval', array_column($daily, 'value'))],
                 'monthlySales' => ['labels' => array_column($monthly, 'label'), 'data' => array_map('floatval', array_column($monthly, 'value'))],
-                'topProducts'  => ['labels' => array_column($top, 'name'), 'data' => array_map('intval', array_column($top, 'total_qty'))],
-                'ktvUsage'     => ['labels' => array_column($ktv, 'room_name'), 'data' => array_map('floatval', array_column($ktv, 'total_revenue'))],
+                'topProducts'  => $top,
+                'ktvUsage'     => [
+                    'labels'   => array_column($ktv, 'room_name'),
+                    'data'     => array_map('floatval', array_column($ktv, 'total_revenue')),
+                    'sessions' => array_map('intval', array_column($ktv, 'total_sessions')),
+                ],
             ],
         ]);
     }

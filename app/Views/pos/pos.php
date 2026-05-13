@@ -12,6 +12,19 @@
         </div>
     </header>
 
+    <?php if (session()->getFlashdata('success')): ?>
+        <div class="mx-3 mt-2 alert alert-success alert-dismissible fade show" role="alert">
+            <?= esc(session()->getFlashdata('success')) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    <?php if (session()->getFlashdata('error')): ?>
+        <div class="mx-3 mt-2 alert alert-danger alert-dismissible fade show" role="alert">
+            <?= esc(session()->getFlashdata('error')) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
     <div class="pos-container">
         <div class="pos-products">
             <div class="pos-category-bar">
@@ -101,7 +114,7 @@
         <div class="modal-content">
             <div class="modal-body text-center py-5">
                 <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
-                <h5 class="mt-3">Order Complete!</h5>
+                <h5 class="mt-3" id="successTitle">Order Complete!</h5>
                 <p class="mb-0 text-muted" id="successInvoice"></p>
                 <p class="mb-0 fw-bold" id="successTotal"></p>
                 <p class="mb-0 small text-muted" id="successChange"></p>
@@ -272,6 +285,7 @@ const POS = {
         const r = await this.checkout(method, cash);
         if (r.success) {
             bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            document.getElementById('successTitle').textContent = r.edited ? 'Order Updated!' : 'Order Complete!';
             document.getElementById('successInvoice').textContent = r.invoice_no;
             document.getElementById('successTotal').textContent = this.formatPrice(r.total);
             document.getElementById('successChange').textContent = r.change != null ? 'Change: ' + this.formatPrice(r.change) : '';

@@ -20,6 +20,7 @@ class ReportModel extends Model
         [$fromDt, $toDt] = $this->normalizeRange($from, $to);
         $row = $this->db->table('orders')
             ->select('COALESCE(SUM(total),0) AS total_amount, COUNT(*) AS total_orders')
+            ->where('status', 'completed')
             ->where('created_at >=', $fromDt)
             ->where('created_at <=', $toDt)
             ->get()->getRowArray();
@@ -33,6 +34,7 @@ class ReportModel extends Model
     {
         [$fromDt, $toDt] = $this->normalizeRange($from, $to);
         $builder = $this->db->table('orders')
+            ->where('status', 'completed')
             ->where('created_at >=', $fromDt)
             ->where('created_at <=', $toDt);
         if ($groupBy === 'month') {
@@ -48,11 +50,47 @@ class ReportModel extends Model
     public function getSalesOrders(?string $from, ?string $to): array
     {
         [$fromDt, $toDt] = $this->normalizeRange($from, $to);
-        return $this->db->table('orders')
+        $orders = $this->db->table('orders')
+            ->where('status', 'completed')
             ->where('created_at >=', $fromDt)
             ->where('created_at <=', $toDt)
             ->orderBy('created_at', 'DESC')
-            ->get()->getResultArray();
+            ->get()
+            ->getResultArray();
+
+        if ($orders === []) {
+            return [];
+        }
+
+        $ids = array_map(static fn ($o) => (int) $o['id'], $orders);
+        $items = $this->db->table('order_items oi')
+            ->select('oi.order_id, oi.qty, oi.price, oi.subtotal, COALESCE(p.name, \'Item\') AS product_name')
+            ->join('products p', 'p.id = oi.product_id', 'left')
+            ->whereIn('oi.order_id', $ids)
+            ->get()
+            ->getResultArray();
+
+        $byOrder = [];
+        foreach ($items as $row) {
+            $oid = (int) $row['order_id'];
+            $byOrder[$oid][] = [
+                'product_name' => $row['product_name'],
+                'qty'          => (int) $row['qty'],
+                'price'        => (float) $row['price'],
+                'subtotal'     => (float) $row['subtotal'],
+            ];
+        }
+
+        foreach ($orders as &$o) {
+            $oid           = (int) $o['id'];
+            $o['items']    = $byOrder[$oid] ?? [];
+            $o['cash']     = $o['cash'] !== null && $o['cash'] !== '' ? (float) $o['cash'] : null;
+            $o['change_amount'] = $o['change_amount'] !== null && $o['change_amount'] !== '' ? (float) $o['change_amount'] : null;
+            $o['total']    = (float) ($o['total'] ?? 0);
+        }
+        unset($o);
+
+        return $orders;
     }
 
     public function getKtvSummary(?string $from, ?string $to): array

@@ -15,6 +15,7 @@ class OrderModel extends Model
         'payment_method',
         'cash',
         'change_amount',
+        'status',
         'created_at',
         'cashier_id',
     ];
@@ -74,7 +75,7 @@ class OrderModel extends Model
     public function getOrdersList(?string $search, ?string $dateFrom, ?string $dateTo, int $perPage = 20, int $page = 1): array
     {
         $builder = $this->db->table('orders o')
-            ->select('o.id, o.invoice_no, o.total, o.payment_method, o.cash, o.change_amount, o.created_at, o.cashier_id, u.name as cashier_name')
+            ->select('o.id, o.invoice_no, o.total, o.payment_method, o.cash, o.change_amount, o.status, o.created_at, o.cashier_id, u.name as cashier_name')
             ->join('users u', 'u.user_id = o.cashier_id', 'left');
         if ($search !== null && $search !== '') {
             $builder->like('o.invoice_no', $search);

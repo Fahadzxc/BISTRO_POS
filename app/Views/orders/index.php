@@ -50,12 +50,13 @@
                                 <th>Cashier</th>
                                 <th>Total Amount</th>
                                 <th>Payment Method</th>
-                                <th width="100">Action</th>
+                                <th>Status</th>
+                                <th width="180">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($orders)): ?>
-                                <tr><td colspan="6" class="text-center text-muted py-4">No orders found.</td></tr>
+                                <tr><td colspan="7" class="text-center text-muted py-4">No orders found.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($orders as $o): ?>
                                 <tr>
@@ -65,7 +66,18 @@
                                     <td>₱<?= number_format((float) ($o['total'] ?? 0), 2) ?></td>
                                     <td><?= esc($o['payment_method'] ?? '') ?></td>
                                     <td>
+                                        <?php $status = strtolower((string) ($o['status'] ?? 'pending')); ?>
+                                        <span class="badge bg-<?= $status === 'completed' ? 'success' : ($status === 'processing' ? 'warning text-dark' : 'secondary') ?>">
+                                            <?= esc(ucfirst($status)) ?>
+                                        </span>
+                                    </td>
+                                    <td>
                                         <a href="<?= site_url('orders/view/' . $o['id']) ?>" class="btn btn-sm btn-outline-primary">View</a>
+                                        <?php if (strtolower((string) session()->get('role')) === 'admin' && $status === 'pending'): ?>
+                                            <a href="<?= site_url('orders/edit/' . $o['id']) ?>" class="btn btn-sm btn-outline-warning" title="Edit Order">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

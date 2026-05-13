@@ -21,8 +21,6 @@ class KtvRooms extends BaseController
             'content'   => view('ktv_rooms/ktv_rooms', [
                 'urlGetRooms'    => site_url('ktv-rooms/get-rooms'),
                 'urlStart'       => site_url('ktv-rooms/start'),
-                'urlPause'       => site_url('ktv-rooms/pause'),
-                'urlResume'      => site_url('ktv-rooms/resume'),
                 'urlEnd'         => site_url('ktv-rooms/end'),
                 'urlSetAvailable'=> site_url('ktv-rooms/set-available'),
                 'csrfToken'      => csrf_hash(),
@@ -31,8 +29,11 @@ class KtvRooms extends BaseController
         ]);
     }
 
+    private const SESSION_LIMIT_SECONDS = 3600;
+
     /**
      * AJAX: Get all rooms with current session and timer info (for polling).
+     * Auto-ends sessions that have reached the 1-hour limit.
      */
     public function getRooms()
     {
@@ -51,15 +52,20 @@ class KtvRooms extends BaseController
             $sessionStatus = null;
 
             if ($session) {
-                $sessionId     = (int) $session['id'];
-                $sessionStatus = $session['status'];
-                $elapsed       = $sessionModel->getElapsedSeconds($session);
-                $hours         = $elapsed / 3600;
-                $currentBill   = round($hours * (float) $room['hourly_rate'], 2);
-                // Room may be out of sync (e.g. set to available but session still active). Force occupied.
-                if ($status !== 'occupied') {
-                    $roomModel->update($roomId, ['status' => 'occupied']);
-                    $status = 'occupied';
+                $elapsed = $sessionModel->getElapsedSeconds($session);
+
+                if ($elapsed >= self::SESSION_LIMIT_SECONDS) {
+                    $this->autoEndSession($room, $session, $roomModel, $sessionModel);
+                    $status = 'cleaning';
+                    $session = null;
+                } else {
+                    $sessionId     = (int) $session['id'];
+                    $sessionStatus = $session['status'];
+                    $currentBill   = (float) $room['hourly_rate'];
+                    if ($status !== 'occupied') {
+                        $roomModel->update($roomId, ['status' => 'occupied']);
+                        $status = 'occupied';
+                    }
                 }
             }
 
@@ -67,6 +73,7 @@ class KtvRooms extends BaseController
                 'id'            => $roomId,
                 'room_name'     => $room['room_name'],
                 'hourly_rate'   => (float) $room['hourly_rate'],
+                'capacity'      => (int) ($room['capacity'] ?? 12),
                 'status'        => $status,
                 'session_id'    => $sessionId,
                 'session_status'=> $sessionStatus,
@@ -76,6 +83,26 @@ class KtvRooms extends BaseController
         }
 
         return $this->response->setJSON($result);
+    }
+
+    /**
+     * Auto-end a session that has reached the 1-hour limit.
+     */
+    private function autoEndSession(array $room, array $session, KtvRoomModel $roomModel, KtvSessionModel $sessionModel): void
+    {
+        $roomId = (int) $room['id'];
+        $totalMinutes = 60;
+        $totalAmount = (float) $room['hourly_rate'];
+
+        $sessionModel->update($session['id'], [
+            'end_time'      => date('Y-m-d H:i:s'),
+            'total_minutes' => $totalMinutes,
+            'total_amount'  => $totalAmount,
+            'status'        => 'ended',
+        ]);
+
+        $roomModel->update($roomId, ['status' => 'cleaning']);
+        $this->addRoomChargeToCart($room['room_name'], $totalAmount, '1 hr');
     }
 
     /**
@@ -110,58 +137,6 @@ class KtvRooms extends BaseController
         return $this->response->setJSON(['success' => true]);
     }
 
-    /**
-     * Pause session.
-     */
-    public function pause()
-    {
-        $roomId = (int) $this->request->getPost('room_id');
-        $sessionModel = new KtvSessionModel();
-        $session = $sessionModel->getActiveByRoom($roomId);
-
-        if (! $session) {
-            return $this->response->setJSON(['success' => false, 'message' => 'No active session']);
-        }
-        if ($session['status'] === 'paused') {
-            return $this->response->setJSON(['success' => false, 'message' => 'Session already paused']);
-        }
-
-        $pausedAt = time();
-        $prevPaused = (int) ($session['total_paused_seconds'] ?? 0);
-        $sessionModel->update($session['id'], [
-            'status'               => 'paused',
-            'paused_at'            => date('Y-m-d H:i:s', $pausedAt),
-            'total_paused_seconds' => $prevPaused,
-        ]);
-
-        return $this->response->setJSON(['success' => true]);
-    }
-
-    /**
-     * Resume session.
-     */
-    public function resume()
-    {
-        $roomId = (int) $this->request->getPost('room_id');
-        $sessionModel = new KtvSessionModel();
-        $session = $sessionModel->getActiveByRoom($roomId);
-
-        if (! $session || $session['status'] !== 'paused') {
-            return $this->response->setJSON(['success' => false, 'message' => 'No paused session']);
-        }
-
-        $pausedAt = strtotime($session['paused_at']);
-        $extraPaused = time() - $pausedAt;
-        $prevPaused = (int) ($session['total_paused_seconds'] ?? 0);
-
-        $sessionModel->update($session['id'], [
-            'status'               => 'active',
-            'paused_at'            => null,
-            'total_paused_seconds' => $prevPaused + $extraPaused,
-        ]);
-
-        return $this->response->setJSON(['success' => true]);
-    }
 
     /**
      * End session: compute bill, update room status, add room charge to POS cart.
@@ -185,9 +160,9 @@ class KtvRooms extends BaseController
         $elapsedSeconds = $sessionModel->getElapsedSeconds($session);
         $totalMinutes   = (int) ceil($elapsedSeconds / 60);
         $totalAmount    = KtvSessionModel::computeAmount((float) $room['hourly_rate'], $totalMinutes);
-        $hoursLabel     = $totalMinutes < 60
-            ? $totalMinutes . ' min'
-            : round($totalMinutes / 60, 1) . ' hr' . ($totalMinutes % 60 ? 's' : '');
+        $totalHours     = (int) ceil($totalMinutes / 60);
+        if ($totalHours < 1) $totalHours = 1;
+        $hoursLabel     = $totalHours . ' hr' . ($totalHours > 1 ? 's' : '');
 
         $sessionModel->update($session['id'], [
             'end_time'          => date('Y-m-d H:i:s'),

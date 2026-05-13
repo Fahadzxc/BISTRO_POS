@@ -1,1 +1,0 @@
-__ci_last_regenerate|i:1773900217;_ci_previous_url|s:36:"http://localhost/BISTRO_POS/products";user_id|s:1:"1";name|s:10:"Admin User";email|s:17:"admin@example.com";role|s:5:"admin";isLoggedIn|b:1;pos_cart|a:1:{s:18:"room_69bb9150bddd6";a:5:{s:10:"product_id";i:46;s:4:"name";s:14:"Room 1 (2 min)";s:5:"price";d:16.67;s:3:"qty";i:1;s:8:"subtotal";d:16.67;}}__ci_vars|a:0:{}

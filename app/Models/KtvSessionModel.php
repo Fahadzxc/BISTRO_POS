@@ -51,12 +51,14 @@ class KtvSessionModel extends Model
     }
 
     /**
-     * Compute bill: hourly_rate * (elapsed_minutes / 60), rounded up to next hour or per minute.
-     * Using per-minute billing: (total_minutes / 60) * hourly_rate
+     * Compute bill: hourly_rate * hours, rounded UP to next full hour.
      */
     public static function computeAmount(float $hourlyRate, int $totalMinutes): float
     {
-        $hours = $totalMinutes / 60.0;
+        $hours = (int) ceil($totalMinutes / 60);
+        if ($hours < 1) {
+            $hours = 1;
+        }
         return round($hours * $hourlyRate, 2);
     }
 }

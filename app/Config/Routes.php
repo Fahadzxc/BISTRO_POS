@@ -27,8 +27,6 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('ktv-rooms', 'KtvRooms::index');
     $routes->get('ktv-rooms/get-rooms', 'KtvRooms::getRooms');
     $routes->post('ktv-rooms/start', 'KtvRooms::start');
-    $routes->post('ktv-rooms/pause', 'KtvRooms::pause');
-    $routes->post('ktv-rooms/resume', 'KtvRooms::resume');
     $routes->post('ktv-rooms/end', 'KtvRooms::end');
     $routes->post('ktv-rooms/set-available', 'KtvRooms::setAvailable');
 
@@ -75,5 +73,12 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('orders', 'Orders::index');
         $routes->get('orders/view/(:num)', 'Orders::view/$1');
         $routes->get('orders/print/(:num)', 'Orders::print/$1');
+    });
+
+    // Role-restricted: admin only (order updates/edit)
+    $routes->group('', ['filter' => 'role:admin'], static function ($routes) {
+        $routes->post('orders/update-status/(:num)', 'Orders::updateStatus/$1');
+        $routes->get('orders/edit/(:num)', 'Orders::edit/$1');
+        $routes->post('orders/update/(:num)', 'Orders::update/$1');
     });
 });

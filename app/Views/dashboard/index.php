@@ -64,6 +64,15 @@
                 </div>
             </div>
             <div class="col-sm-6 col-xl-3">
+                <div class="stat-card d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-purple bg-opacity-10 text-purple" style="background:rgba(128,0,128,0.1);color:purple;"><i class="bi bi-mic-fill"></i></div>
+                    <div>
+                        <div class="stat-value" id="wKtvSales">₱0</div>
+                        <div class="stat-label">KTV Sales Today</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
                 <a href="<?= site_url('inventory') ?>?status=low_stock" class="text-decoration-none text-dark">
                     <div class="stat-card d-flex align-items-center gap-3">
                         <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-exclamation-triangle"></i></div>
@@ -87,6 +96,16 @@
             </div>
         </div>
 
+        <!-- Active KTV Rooms Section -->
+        <div class="card border-0 shadow-sm mb-4 mt-3">
+            <div class="card-body">
+                <h6 class="mb-3"><i class="bi bi-music-note-beamed me-2"></i>Active KTV Rooms</h6>
+                <div id="activeRoomsContainer">
+                    <p class="text-muted mb-0">No active rooms.</p>
+                </div>
+            </div>
+        </div>
+
         <div class="row g-3">
             <div class="col-lg-6">
                 <div class="card border-0 shadow-sm h-100">
@@ -105,18 +124,25 @@
                 </div>
             </div>
             <div class="col-lg-7">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body">
-                        <h6 class="mb-2">Top 10 Products (by qty)</h6>
-                        <canvas id="chartTopProducts" height="150"></canvas>
+                <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="bi bi-trophy-fill me-2 text-warning"></i>Top 10 Products</h6>
+                        <a href="<?= site_url('products') ?>" class="btn btn-sm btn-outline-secondary">View all</a>
+                    </div>
+                    <div class="card-body pt-0" id="topProductsList">
+                        <p class="text-muted text-center py-4 mb-0">Loading…</p>
                     </div>
                 </div>
             </div>
             <div class="col-lg-5">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body">
-                        <h6 class="mb-2">KTV Room Usage (Revenue)</h6>
-                        <canvas id="chartKtvUsage" height="150"></canvas>
+                <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="bi bi-mic-fill me-2" style="color:#7c3aed;"></i>KTV Room Usage</h6>
+                        <a href="<?= site_url('ktv-rooms') ?>" class="btn btn-sm btn-outline-primary">Rooms</a>
+                    </div>
+                    <div class="card-body pt-0">
+                        <p class="text-muted small mb-3">Revenue from ended sessions in the last 30 days.</p>
+                        <div id="ktvUsagePanel"></div>
                     </div>
                 </div>
             </div>
@@ -128,8 +154,13 @@
 <script>
 (function() {
     const urlStats = '<?= esc($urlStats) ?>';
+    const baseUrl = '<?= rtrim(base_url(), '/') ?>/';
     const peso = (n) => '₱' + Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    let dailyChart, monthlyChart, topChart, ktvChart;
+    let dailyChart, monthlyChart;
+
+    function escHtml(s) {
+        return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    }
 
     function ensureCharts() {
         if (!dailyChart) {
@@ -146,20 +177,105 @@
                 options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return '₱' + v; } } } } }
             });
         }
-        if (!topChart) {
-            topChart = new Chart(document.getElementById('chartTopProducts'), {
-                type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Qty Sold', data: [], backgroundColor: 'rgba(237,137,54,0.75)' }] },
-                options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-            });
+    }
+
+    function renderTopProducts(products) {
+        const el = document.getElementById('topProductsList');
+        if (!products || !products.length) {
+            el.innerHTML = '<p class="text-muted text-center py-4 mb-0">No sales yet.</p>';
+            return;
         }
-        if (!ktvChart) {
-            ktvChart = new Chart(document.getElementById('chartKtvUsage'), {
-                type: 'pie',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#1a365d','#2c5282','#ed8936','#38a169','#dc2626','#0ea5e9','#a855f7','#f59e0b','#64748b','#14b8a6'] }] },
-                options: { responsive: true }
-            });
+        const medals = ['🥇', '🥈', '🥉'];
+        el.innerHTML = products.map((p, i) => {
+            let imgUrl = '';
+            if (p.image) {
+                const s = String(p.image).replace(/^\//, '');
+                if (s.startsWith('http://') || s.startsWith('https://')) {
+                    imgUrl = s;
+                } else {
+                    const path = s.startsWith('uploads/') ? s : ('uploads/products/' + s);
+                    imgUrl = baseUrl + path;
+                }
+            }
+            const thumb = imgUrl
+                ? `<img src="${escHtml(imgUrl)}" alt="" class="rounded-3 flex-shrink-0" width="52" height="52" style="object-fit:cover;border:1px solid #e5e7eb;">`
+                : `<div class="rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center bg-light border" style="width:52px;height:52px;"><i class="bi bi-image text-muted"></i></div>`;
+            const rank = i < 3 ? `<span class="fs-5">${medals[i]}</span>` : `<span class="badge rounded-pill bg-light text-secondary border">${i + 1}</span>`;
+            return `
+            <div class="d-flex align-items-center gap-3 py-2 ${i < products.length - 1 ? 'border-bottom border-light' : ''}">
+                <div style="min-width:36px;text-align:center;">${rank}</div>
+                ${thumb}
+                <div class="flex-grow-1 min-w-0">
+                    <div class="fw-semibold text-truncate">${escHtml(p.name)}</div>
+                    <div class="small text-muted">${peso(p.price)} · <span class="text-dark fw-medium">${p.total_qty} sold</span></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderKtvUsage(ktv) {
+        const el = document.getElementById('ktvUsagePanel');
+        const labels = ktv?.labels || [];
+        const data = ktv?.data || [];
+        const sessions = ktv?.sessions || [];
+        if (!labels.length) {
+            el.innerHTML = '<p class="text-muted text-center py-3 mb-0">No rooms configured.</p>';
+            return;
         }
+        const totalRev = data.reduce((a, b) => a + Number(b || 0), 0);
+        const totalSess = sessions.reduce((a, b) => a + Number(b || 0), 0);
+        const colors = ['#5b21b6', '#2563eb', '#ea580c', '#059669', '#dc2626'];
+        const hasAny = totalRev > 0 || totalSess > 0;
+
+        let html = `
+        <div class="rounded-3 p-3 mb-3 text-white" style="background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 45%,#2563eb 100%);">
+            <div class="row g-2 text-center">
+                <div class="col-6">
+                    <div class="small opacity-75">Total revenue</div>
+                    <div class="fs-5 fw-bold">${peso(totalRev)}</div>
+                </div>
+                <div class="col-6">
+                    <div class="small opacity-75">Sessions ended</div>
+                    <div class="fs-5 fw-bold">${totalSess}</div>
+                </div>
+            </div>
+            ${totalSess > 0 ? `<div class="small text-center mt-2 opacity-75">Avg ${peso(totalRev / totalSess)} per session</div>` : ''}
+        </div>`;
+
+        if (!hasAny) {
+            html += '<p class="text-muted small text-center mb-3">No ended sessions in the last 30 days. Open <a href="<?= site_url('ktv-rooms') ?>">KTV Rooms</a> to start one.</p>';
+        }
+
+        html += labels.map((label, i) => {
+            const rev = Number(data[i] || 0);
+            const sess = Number(sessions[i] || 0);
+            const share = totalRev > 0 ? Math.round((rev / totalRev) * 100) : 0;
+            const c = colors[i % colors.length];
+            return `
+            <div class="mb-3 p-3 rounded-3" style="background:#fafafa;border:1px solid #eee;">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <div class="d-flex align-items-center gap-2 min-w-0">
+                        <span class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px;background:${c}18;color:${c};">
+                            <i class="bi bi-door-open fs-5"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="fw-semibold text-truncate">${escHtml(label)}</div>
+                            <div class="small text-muted">${sess} session${sess === 1 ? '' : 's'}</div>
+                        </div>
+                    </div>
+                    <div class="text-end flex-shrink-0">
+                        <div class="fw-bold" style="color:${c};">${peso(rev)}</div>
+                        ${totalRev > 0 ? `<div class="small text-muted">${share}% of total</div>` : ''}
+                    </div>
+                </div>
+                <div class="progress" style="height:8px;border-radius:6px;background:#e5e7eb;">
+                    <div class="progress-bar" role="progressbar" style="width:${totalRev > 0 ? share : 0}%;background:${c};border-radius:6px;"></div>
+                </div>
+            </div>`;
+        }).join('');
+
+        html += `<a href="<?= site_url('reports/ktv') ?>" class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-graph-up-arrow me-1"></i>Full KTV report</a>`;
+        el.innerHTML = html;
     }
 
     function applyWidgets(w) {
@@ -167,25 +283,64 @@
         document.getElementById('wOrdersToday').textContent = w.totalOrdersToday ?? 0;
         document.getElementById('wCustomersToday').textContent = w.totalCustomersToday ?? 0;
         document.getElementById('wActiveRooms').textContent = w.activeKtvRooms ?? 0;
+        document.getElementById('wKtvSales').textContent = peso(w.ktvSalesToday);
         document.getElementById('wLowStock').textContent = w.lowStockAlerts ?? 0;
         document.getElementById('wOutStock').textContent = w.outOfStockAlerts ?? 0;
     }
 
+    function formatTimer(seconds) {
+        const s = Math.max(0, Math.floor(Number(seconds)));
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        return [h, m].map(v => String(v).padStart(2, '0')).join(':');
+    }
+
+    function renderActiveRooms(rooms) {
+        const container = document.getElementById('activeRoomsContainer');
+        if (!rooms || rooms.length === 0) {
+            container.innerHTML = '<p class="text-muted mb-0">No active rooms.</p>';
+            return;
+        }
+        container.innerHTML = '<div class="row g-2">' + rooms.map(room => {
+            const isLow = room.remaining <= 300;
+            return `
+                <div class="col-sm-6 col-md-4">
+                    <div class="border rounded p-3 ${isLow ? 'border-danger' : 'border-success'}">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong>${room.room_name}</strong>
+                            <span class="badge bg-danger">Occupied</span>
+                        </div>
+                        <div class="fs-4 fw-bold ${isLow ? 'text-danger' : ''}">${formatTimer(room.remaining)} <small class="text-muted fw-normal">remaining</small></div>
+                        <div class="small text-muted mt-1">
+                            <i class="bi bi-people-fill me-1"></i>Max ${room.capacity} persons &bull; ${peso(room.hourly_rate)}/hr
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('') + '</div>';
+    }
+
     function applyCharts(c) {
         ensureCharts();
-        dailyChart.data.labels = c.dailySales?.labels || []; dailyChart.data.datasets[0].data = c.dailySales?.data || []; dailyChart.update();
-        monthlyChart.data.labels = c.monthlySales?.labels || []; monthlyChart.data.datasets[0].data = c.monthlySales?.data || []; monthlyChart.update();
-        topChart.data.labels = c.topProducts?.labels || []; topChart.data.datasets[0].data = c.topProducts?.data || []; topChart.update();
-        ktvChart.data.labels = c.ktvUsage?.labels || [];
-        ktvChart.data.datasets[0].data = (c.ktvUsage?.data || []).map(function(v) { return Math.max(0.01, v); });
-        ktvChart.update();
+        dailyChart.data.labels = c.dailySales?.labels || [];
+        dailyChart.data.datasets[0].data = c.dailySales?.data || [];
+        dailyChart.update();
+        monthlyChart.data.labels = c.monthlySales?.labels || [];
+        monthlyChart.data.datasets[0].data = c.monthlySales?.data || [];
+        monthlyChart.update();
+        renderTopProducts(Array.isArray(c.topProducts) ? c.topProducts : []);
+        renderKtvUsage(c.ktvUsage || {});
     }
 
     async function refresh() {
         try {
             const r = await fetch(urlStats);
             const res = await r.json();
-            if (res.success) { applyWidgets(res.widgets); applyCharts(res.charts); }
+            if (res.success) {
+                applyWidgets(res.widgets);
+                applyCharts(res.charts);
+                renderActiveRooms(res.activeRooms || []);
+            }
         } catch (e) {}
     }
 

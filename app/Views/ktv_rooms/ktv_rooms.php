@@ -49,8 +49,6 @@ const KTV = {
     cfg: {
         getRooms: '<?= $urlGetRooms ?>',
         start: '<?= $urlStart ?>',
-        pause: '<?= $urlPause ?>',
-        resume: '<?= $urlResume ?? $urlStart ?>',
         end: '<?= $urlEnd ?>',
         setAvailable: '<?= $urlSetAvailable ?? $urlStart ?>',
         csrfName: '<?= $csrfName ?>',
@@ -65,8 +63,7 @@ const KTV = {
         const sec = Math.max(0, Math.floor(Number(seconds)));
         const h = Math.floor(sec / 3600);
         const m = Math.floor((sec % 3600) / 60);
-        const s = sec % 60;
-        return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+        return [h, m].map(v => String(v).padStart(2, '0')).join(':');
     },
     formatPrice(n) {
         return '₱' + parseFloat(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -84,49 +81,57 @@ const KTV = {
         const text = await r.text();
         try { return JSON.parse(text); } catch (e) { return []; }
     },
-    /** Compute display elapsed/bill. Active = client clock (base + delta) so counting is steady like a real clock. Paused = server value (frozen). */
+    sessionLimit: 3600,
+    autoEndingRooms: {},
     roomsForDisplay() {
         const nowSec = Date.now() / 1000;
         return this.rooms.map(room => {
-            const hasSession = room.session_id && (room.session_status === 'active' || room.session_status === 'paused');
+            const hasSession = room.session_id && room.session_status === 'active';
             let elapsed = room.elapsed || 0;
             const rid = room.id;
             const base = this.roomBases[rid];
-            if (hasSession && room.session_status === 'active') {
+            if (hasSession) {
                 if (!base || base.sessionId !== room.session_id) {
                     this.roomBases[rid] = { baseElapsed: room.elapsed || 0, baseTs: nowSec, sessionId: room.session_id };
                 }
                 const b = this.roomBases[rid];
                 elapsed = b.baseElapsed + (nowSec - b.baseTs);
-            } else if (hasSession && room.session_status === 'paused') {
-                elapsed = room.elapsed || 0;
+                if (elapsed >= this.sessionLimit && !this.autoEndingRooms[rid]) {
+                    this.autoEndingRooms[rid] = true;
+                    this.autoEnd(rid, room.room_name);
+                }
             } else {
                 if (this.roomBases[rid]) delete this.roomBases[rid];
+                if (this.autoEndingRooms[rid]) delete this.autoEndingRooms[rid];
             }
-            const hours = elapsed / 3600;
-            const current_bill = hasSession ? Math.round(hours * room.hourly_rate * 100) / 100 : 0;
-            return { ...room, elapsed, current_bill };
+            const remaining = hasSession ? Math.max(0, this.sessionLimit - elapsed) : 0;
+            const current_bill = hasSession ? room.hourly_rate : 0;
+            return { ...room, elapsed, current_bill, remaining };
         });
+    },
+    async autoEnd(roomId, roomName) {
+        const r = await this.fetch(this.cfg.end, { room_id: roomId });
+        if (r.success) {
+            alert(roomName + ' session ended (1 hour reached). Bill: ' + this.formatPrice(r.total_amount));
+            this.poll();
+        }
+        delete this.autoEndingRooms[roomId];
     },
     render(rooms) {
         const grid = document.getElementById('ktvGrid');
         if (!grid) return;
         grid.innerHTML = rooms.map(room => {
-            const hasSession = room.session_id && (room.session_status === 'active' || room.session_status === 'paused');
+            const hasSession = room.session_id && room.session_status === 'active';
             const statusClass = 'status-' + room.status;
             const statusLabel = room.status.charAt(0).toUpperCase() + room.status.slice(1);
-            const timerStr = hasSession ? this.formatTime(room.elapsed) : '--:--:--';
+            const timerStr = hasSession ? this.formatTime(room.remaining) : '01:00';
             const billStr = hasSession ? this.formatPrice(room.current_bill) : '₱0.00';
+            const timerWarning = hasSession && room.remaining <= 300 ? ' text-danger fw-bold' : '';
             let actions = '';
             if (room.status === 'available') {
                 actions = `<button type="button" class="btn btn-success btn-start" data-room-id="${room.id}"><i class="bi bi-play-fill me-1"></i>Start</button>`;
             } else if (room.status === 'occupied' && hasSession) {
-                if (room.session_status === 'active') {
-                    actions = `<button type="button" class="btn btn-warning btn-pause" data-room-id="${room.id}"><i class="bi bi-pause-fill me-1"></i>Pause</button>`;
-                } else {
-                    actions = `<button type="button" class="btn btn-info btn-resume" data-room-id="${room.id}"><i class="bi bi-play-fill me-1"></i>Resume</button>`;
-                }
-                actions += ` <button type="button" class="btn btn-danger btn-end" data-room-id="${room.id}" data-room-name="${room.room_name}" data-bill="${room.current_bill}"><i class="bi bi-stop-fill me-1"></i>End</button>`;
+                actions = `<button type="button" class="btn btn-danger btn-end" data-room-id="${room.id}" data-room-name="${room.room_name}" data-bill="${room.current_bill}"><i class="bi bi-stop-fill me-1"></i>End</button>`;
             } else if (room.status === 'cleaning') {
                 actions = `<button type="button" class="btn btn-outline-success btn-available" data-room-id="${room.id}"><i class="bi bi-check-lg me-1"></i>Available</button>`;
             }
@@ -136,30 +141,21 @@ const KTV = {
                     <span class="room-name">${room.room_name}</span>
                     <span class="badge bg-${room.status === 'available' ? 'success' : room.status === 'occupied' ? 'danger' : 'warning'}">${statusLabel}</span>
                 </div>
-                <div class="room-timer">${timerStr}</div>
+                <div class="room-timer${timerWarning}">${timerStr}</div>
                 <div class="room-bill">${billStr}</div>
                 <div class="small text-muted">₱${parseFloat(room.hourly_rate).toFixed(0)}/hr</div>
+                <div class="small text-muted"><i class="bi bi-people-fill me-1"></i>Max ${room.capacity} persons</div>
                 <div class="room-actions mt-2">${actions}</div>
             </div>
             `;
         }).join('');
 
         grid.querySelectorAll('.btn-start').forEach(btn => btn.addEventListener('click', () => this.start(btn.dataset.roomId)));
-        grid.querySelectorAll('.btn-pause').forEach(btn => btn.addEventListener('click', () => this.pause(btn.dataset.roomId)));
-        grid.querySelectorAll('.btn-resume').forEach(btn => btn.addEventListener('click', () => this.resume(btn.dataset.roomId)));
         grid.querySelectorAll('.btn-end').forEach(btn => btn.addEventListener('click', () => this.showEndModal(btn.dataset.roomId, btn.dataset.roomName, btn.dataset.bill)));
         grid.querySelectorAll('.btn-available').forEach(btn => btn.addEventListener('click', () => this.setAvailable(btn.dataset.roomId)));
     },
     async start(roomId) {
         const r = await this.fetch(this.cfg.start, { room_id: roomId });
-        if (r.success) this.poll(); else alert(r.message || 'Failed');
-    },
-    async pause(roomId) {
-        const r = await this.fetch(this.cfg.pause, { room_id: roomId });
-        if (r.success) this.poll(); else alert(r.message || 'Failed');
-    },
-    async resume(roomId) {
-        const r = await this.fetch(this.cfg.resume, { room_id: roomId });
         if (r.success) this.poll(); else alert(r.message || 'Failed');
     },
     showEndModal(roomId, roomName, bill) {

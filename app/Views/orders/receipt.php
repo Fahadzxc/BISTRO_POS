@@ -40,9 +40,13 @@
     </div>
     <div class="receipt-line"></div>
     <div class="receipt-row"><span>Total:</span><span>₱<?= number_format((float) ($order['total'] ?? 0), 2) ?></span></div>
-    <?php if (! empty($order['cash']) && ($order['payment_method'] ?? '') === 'cash'): ?>
-    <div class="receipt-row"><span>Cash:</span><span>₱<?= number_format((float) $order['cash'], 2) ?></span></div>
+    <?php if (($order['payment_method'] ?? '') === 'cash'): ?>
+    <div class="receipt-row"><span>Amount paid:</span><span>₱<?= number_format((float) ($order['cash'] ?? 0), 2) ?></span></div>
     <div class="receipt-row"><span>Change:</span><span>₱<?= number_format((float) ($order['change_amount'] ?? 0), 2) ?></span></div>
+    <?php elseif (($order['payment_method'] ?? '') === 'card'): ?>
+    <div class="receipt-row"><span>Payment:</span><span>Card</span></div>
+    <div class="receipt-row"><span>Amount paid:</span><span>₱<?= number_format((float) ($order['total'] ?? 0), 2) ?></span></div>
+    <div class="receipt-row"><span>Change:</span><span>—</span></div>
     <?php endif; ?>
     <div class="receipt-line"></div>
     <div class="receipt-footer">Thank you!</div>

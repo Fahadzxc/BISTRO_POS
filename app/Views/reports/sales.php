@@ -10,7 +10,7 @@
     </header>
 
     <main class="content-area">
-        <div class="d-flex gap-2 mb-3 flex-wrap">
+        <div class="d-flex gap-2 mb-3 flex-wrap no-print">
             <a href="<?= site_url('reports/sales') ?>" class="btn btn-primary">
                 <i class="bi bi-receipt me-1"></i>Sales
             </a>
@@ -21,7 +21,14 @@
                 <i class="bi bi-archive me-1"></i>Inventory
             </a>
         </div>
-        <div class="card border-0 shadow-sm mb-3">
+
+        <div class="sales-print-header d-none d-print-block text-center mb-3 pb-2 border-bottom">
+            <div class="fw-bold fs-5">Bistro POS</div>
+            <div class="small text-muted">Sales summary</div>
+            <div class="small" id="printDateRange"></div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-3 no-print">
             <div class="card-body">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-3">
@@ -34,13 +41,13 @@
                     </div>
                     <div class="col-md-6 d-flex gap-2">
                         <button type="button" class="btn btn-primary" id="applyBtn"><i class="bi bi-funnel me-1"></i>Apply</button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+                        <button type="button" class="btn btn-outline-secondary" id="printBtn"><i class="bi bi-printer me-1"></i>Print</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
+        <div class="row g-3 mb-3 sales-print-summary">
             <div class="col-md-4">
                 <div class="stat-card">
                     <div class="stat-value" id="sumAmount">₱0.00</div>
@@ -61,23 +68,32 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm mb-3">
+        <div class="card border-0 shadow-sm mb-3 no-print">
             <div class="card-body">
                 <h6 class="mb-2">Sales Trend</h6>
                 <canvas id="salesTrend" height="120"></canvas>
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm no-print-padding">
+        <div class="card border-0 shadow-sm sales-print-orders">
             <div class="card-body">
-                <h6 class="mb-2">Orders</h6>
+                <h6 class="mb-2 no-print">Orders</h6>
+                <h6 class="mb-2 d-none d-print-block small fw-bold">Order list</h6>
                 <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle mb-0">
+                    <table class="table table-sm table-hover align-middle mb-0 sales-orders-table">
                         <thead class="table-light">
-                            <tr><th>Invoice</th><th>Total</th><th>Payment</th><th>Date</th></tr>
+                            <tr>
+                                <th>Invoice</th>
+                                <th style="min-width:200px;">Items ordered</th>
+                                <th class="text-end">Total</th>
+                                <th>Payment</th>
+                                <th class="text-end">Amount paid</th>
+                                <th class="text-end">Change</th>
+                                <th>Date</th>
+                            </tr>
                         </thead>
                         <tbody id="ordersBody">
-                            <tr><td colspan="4" class="text-muted text-center py-3">Loading...</td></tr>
+                            <tr><td colspan="7" class="text-muted text-center py-3">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -103,8 +119,30 @@
     function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function renderOrders(orders) {
         const body = document.getElementById('ordersBody');
-        if (!orders || !orders.length) { body.innerHTML = '<tr><td colspan="4" class="text-muted text-center py-3">No data.</td></tr>'; return; }
-        body.innerHTML = orders.map(o => '<tr><td><strong>' + escapeHtml(o.invoice_no || '') + '</strong></td><td>' + peso(o.total) + '</td><td>' + escapeHtml(o.payment_method || '') + '</td><td>' + escapeHtml(o.created_at || '') + '</td></tr>').join('');
+        if (!orders || !orders.length) { body.innerHTML = '<tr><td colspan="7" class="text-muted text-center py-3">No data.</td></tr>'; return; }
+        body.innerHTML = orders.map(o => {
+            const items = (o.items || []).map(it =>
+                '<div class="sales-order-line">' + escapeHtml(String(it.qty)) + '× ' + escapeHtml(it.product_name || 'Item')
+                + ' <span class="text-muted">@' + peso(it.price) + '</span> → ' + peso(it.subtotal) + '</div>'
+            ).join('');
+            const pm = (o.payment_method || '').toLowerCase();
+            let amountPaid = '—';
+            let changeStr = '—';
+            if (pm === 'cash') {
+                amountPaid = o.cash != null ? peso(o.cash) : '—';
+                changeStr = o.change_amount != null ? peso(o.change_amount) : '—';
+            } else if (pm === 'card') {
+                amountPaid = peso(o.total);
+                changeStr = '—';
+            }
+            return '<tr><td><strong>' + escapeHtml(o.invoice_no || '') + '</strong></td>'
+                + '<td class="small sales-order-items">' + (items || '<span class="text-muted">—</span>') + '</td>'
+                + '<td class="text-end fw-medium">' + peso(o.total) + '</td>'
+                + '<td>' + escapeHtml(o.payment_method || '') + '</td>'
+                + '<td class="text-end">' + amountPaid + '</td>'
+                + '<td class="text-end">' + changeStr + '</td>'
+                + '<td class="text-nowrap small">' + escapeHtml(o.created_at || '') + '</td></tr>';
+        }).join('');
     }
     async function load() {
         const from = document.getElementById('fromDate').value;
@@ -124,7 +162,39 @@
         renderOrders(res.orders || []);
     }
     document.getElementById('applyBtn').addEventListener('click', load);
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+    function syncPrintDateRange() {
+        const from = document.getElementById('fromDate').value;
+        const to = document.getElementById('toDate').value;
+        const el = document.getElementById('printDateRange');
+        if (el) el.textContent = from && to ? from + ' to ' + to : '';
+    }
+    window.addEventListener('beforeprint', syncPrintDateRange);
     load();
 })();
 </script>
-<style>@media print { .sidebar, .top-navbar, .btn, #applyBtn, .no-print-padding { display: none !important; } .main-wrapper { margin-left: 0 !important; } }</style>
+<style>
+@media print {
+    @page { size: auto; margin: 12mm; }
+    body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sidebar,
+    .top-navbar,
+    .no-print { display: none !important; }
+    .main-wrapper {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    .content-area { padding: 0 !important; }
+    .sales-print-summary .stat-card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        padding: 0.75rem !important;
+    }
+    .sales-print-orders { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+    .sales-print-orders table { font-size: 10px; }
+    .sales-order-line { line-height: 1.35; margin-bottom: 2px; }
+    canvas#salesTrend { display: none !important; }
+}
+.sales-order-items { vertical-align: top; }
+</style>
